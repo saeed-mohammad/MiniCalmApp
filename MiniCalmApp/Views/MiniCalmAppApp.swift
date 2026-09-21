@@ -11,7 +11,7 @@ import SwiftUI
 struct MiniCalmAppApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            LibraryView()
         }
     }
 }
