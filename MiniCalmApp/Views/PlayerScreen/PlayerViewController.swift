@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import AVFoundation
 
 class PlayerViewController: UIViewController {
    
@@ -20,12 +19,11 @@ class PlayerViewController: UIViewController {
    @IBOutlet private weak var speedButton: UIButton!
    
    private let session: Sessions
-   private var player: AVPlayer?
-   private var timeObserver: Any?
-   private var playbackSpeed: Float = 1.0
+   private let viewModel: PlayerViewModel
    
    init(session: Sessions) {
       self.session = session
+      self.viewModel = PlayerViewModel(session: session)
       super.init(nibName: "PlayerViewController", bundle: nil)
    }
    
@@ -36,25 +34,10 @@ class PlayerViewController: UIViewController {
    override func viewDidLoad() {
       super.viewDidLoad()
       
-      configureAudioSession()
       configureUI()
       configureProgress()
       loadArtwork()
-   }
-   
-   // AVFoundation Configuration
-   private func configureAudioSession() {
-      do {
-         try AVAudioSession.sharedInstance().setCategory(
-            .playback,
-            mode: .default
-         )
-         
-         try AVAudioSession.sharedInstance().setActive(true)
-         
-      } catch {
-         print("Audio session error:", error.localizedDescription)
-      }
+      bindViewModel()
    }
    
    // UI Initial Setup
@@ -67,16 +50,72 @@ class PlayerViewController: UIViewController {
       speedButton?.setTitle("1x", for: .normal)
    }
    
-   
+   // Slider Initial Setup
    private func configureProgress() {
       progressSlider?.minimumValue = 0
-      progressSlider?.maximumValue = Float(session.durationSeconds)
+//      progressSlider?.maximumValue = Float(session.durationSeconds)
       progressSlider?.value = 0
-      
-      remainingTimeLabel?.text = formatTime(session.durationSeconds)
+      //      remainingTimeLabel?.text = formatTime(session.durationSeconds)
+      elapsedTimeLabel?.text = "00:00"
+      remainingTimeLabel?.text = "--:--"
    }
    
-   // load Image
+   //  ViewModel Binding
+   private func bindViewModel() {
+      viewModel.onDurationChange = { [weak self] duration in
+
+          self?.progressSlider?.minimumValue = 0
+          self?.progressSlider?.maximumValue = Float(duration)
+          self?.remainingTimeLabel?.text = self?.formatTime(Int(duration))
+      }
+      
+      
+      viewModel.onTimeUpdate = { [weak self] elapsed, remaining, progress in
+         
+         self?.elapsedTimeLabel?.text = self?.formatTime(elapsed)
+         
+//         self?.remainingTimeLabel?.text = "-\(self?.formatTime(remaining) ?? "00:00")"
+         
+         self?.progressSlider?.value = progress
+      }
+      
+      
+      viewModel.onPlaybackStateChange = {
+         [weak self] isPlaying in
+         
+         self?.playPauseButton?.setTitle(
+            isPlaying ? "Pause" : "Play",
+            for: .normal
+         )
+      }
+      
+      viewModel.onSpeedChange = {
+         [weak self] speed in
+         
+         switch speed {
+         case 1.0:
+            self?.speedButton?.setTitle("1x", for: .normal)
+            
+         case 1.5:
+            self?.speedButton?.setTitle("1.5x", for: .normal)
+            
+         case 2.0:
+            self?.speedButton?.setTitle("2x", for: .normal)
+            
+         default:
+            break
+         }
+      }
+      
+      
+      viewModel.onError = { errorMessage in
+         print("Player Error:", errorMessage)
+      }
+      
+      
+   }
+   
+   // load hero Image
    private func loadArtwork() {
 
        artworkImageView?.image = UIImage(systemName: "music.quarternote.3")
@@ -104,143 +143,21 @@ class PlayerViewController: UIViewController {
    
    
    @IBAction func sliderValueChanged(_ sender: UISlider) {
-      guard let player else {
-         return
-      }
-      
-      let seconds = Double(sender.value)
-      
-      let time = CMTime(
-         seconds: seconds,
-         preferredTimescale: 600
-      )
-      
-      player.seek(to: time)
-      
-      elapsedTimeLabel?.text = formatTime(Int(seconds))
-      
-      let remaining = max(
-         session.durationSeconds - Int(seconds),
-         0
-      )
-      
-      remainingTimeLabel?.text = "-\(formatTime(remaining))"
+      viewModel.seek(to: sender.value)
    }
    
    @IBAction func playPauseTapped(_ sender: UIButton) {
-      if player == nil {
-         createPlayer()
-      }
-      
-      guard let player else {
-         print("Player could not be created")
-         return
-      }
-      
-      if player.timeControlStatus == .playing {
-         player.pause()
-         playPauseButton?.setTitle("Play", for: .normal)
-         
-      } else {
-         player.playImmediately(atRate: playbackSpeed)
-         playPauseButton?.setTitle("Pause", for: .normal)
+//      viewModel.playPause()
+      Task {
+         await viewModel.playPause()
       }
    }
    
    @IBAction func speedTapped(_ sender: UIButton) {
-      switch playbackSpeed {
-      case 1.0:
-         playbackSpeed = 1.5
-         
-      case 1.5:
-         playbackSpeed = 2.0
-         
-      default:
-         playbackSpeed = 1.0
-      }
-      
-      speedButton?.setTitle(
-         "\(playbackSpeed)x",
-         for: .normal
-      )
-      
-      if let player,
-         player.timeControlStatus == .playing {
-         player.rate = playbackSpeed
-      }
+      viewModel.changeSpeed()
    }
    
-   
-   private func createPlayer() {
-      
-      guard let url = URL(string: session.audioUrl) else {
-         print("Invalid audio URL")
-         return
-      }
-      
-      let player = AVPlayer(url: url)
-      
-      self.player = player
-      
-      addTimeObserver()
-      
-      NotificationCenter.default.addObserver(
-         self,
-         selector: #selector(playerDidFinish),
-         name: .AVPlayerItemDidPlayToEndTime,
-         object: player.currentItem
-      )
-   }
-   
-   private func addTimeObserver() {
-      
-      guard let player else {
-         return
-      }
-      
-      let interval = CMTime(
-         seconds: 0.5,
-         preferredTimescale: 600
-      )
-      
-      timeObserver = player.addPeriodicTimeObserver(
-         forInterval: interval,
-         queue: .main
-      ) { [weak self] time in
-         
-         guard let self else {
-            return
-         }
-         
-         let elapsed = max(time.seconds, 0)
-         
-         self.elapsedTimeLabel?.text =
-         self.formatTime(Int(elapsed))
-         
-         let remaining = max(
-            self.session.durationSeconds - Int(elapsed),
-            0
-         )
-         
-         self.remainingTimeLabel?.text =
-         "-\(self.formatTime(remaining))"
-         
-         self.progressSlider?.value =
-         Float(elapsed)
-      }
-   }
-   
-   @objc private func playerDidFinish() {
-      
-      playPauseButton?.setTitle("Play", for: .normal)
-      
-      progressSlider?.value = Float(session.durationSeconds)
-      
-      elapsedTimeLabel?.text = formatTime(session.durationSeconds)
-      
-      remainingTimeLabel?.text = "-00:00"
-   }
-   
+   // MARK: - Helper Methods
    private func formatTime(_ seconds: Int) -> String {
       
       let minutes = seconds / 60
@@ -253,14 +170,6 @@ class PlayerViewController: UIViewController {
       )
    }
    
-   deinit {
-      
-      if let timeObserver {
-         player?.removeTimeObserver(timeObserver)
-      }
-      
-      NotificationCenter.default.removeObserver(self)
-   }
    
 }
 

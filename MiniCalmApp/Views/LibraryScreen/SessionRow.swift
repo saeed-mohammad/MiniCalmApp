@@ -30,7 +30,7 @@ struct SessionRow: View {
 
             } else {
 
-                Image(systemName: "photo")
+                Image(systemName: "music.quarternote.3")
                     .frame(width: 70, height: 70)
                     .background(.gray.opacity(0.2))
             }
