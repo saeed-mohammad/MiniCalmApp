@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		806525BC3062E0590036ACED /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 806525BB3062E0590036ACED /* README.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		800BB13D306157970062605E /* MiniCalmApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MiniCalmApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		806525BB3062E0590036ACED /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -45,6 +50,7 @@
 		800BB134306157960062605E = {
 			isa = PBXGroup;
 			children = (
+				806525BB3062E0590036ACED /* README.md */,
 				800BB13F306157970062605E /* MiniCalmApp */,
 				800BB13E306157970062605E /* Products */,
 			);
@@ -122,6 +128,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				806525BC3062E0590036ACED /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
