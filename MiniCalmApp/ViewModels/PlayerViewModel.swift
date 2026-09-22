@@ -32,7 +32,7 @@ class PlayerViewModel {
    }
    
    
-   // AVFoundation Configuration
+   // MARK: - AVFoundation Configuration
    private func configureAudioSession() {
       do {
          try AVAudioSession.sharedInstance().setCategory(
@@ -210,7 +210,31 @@ class PlayerViewModel {
         player.seek(to: time)
     }
 
-    
+// MARK: - Actual Duration For UI
+   func loadDuration() async {
+       guard let url = URL(string: session.audioUrl) else {
+           onError?("Invalid audio URL")
+           return
+       }
+
+       let asset = AVURLAsset(url: url)
+
+       do {
+           let duration = try await asset.load(.duration)
+
+           guard duration.seconds > 0 else {
+               onError?("Invalid audio duration")
+               return
+           }
+
+           self.duration = duration.seconds
+           onDurationChange?(duration.seconds)
+
+       } catch {
+           onError?(error.localizedDescription)
+       }
+   }
+
     deinit {
         if let timeObserver {
             player?.removeTimeObserver(timeObserver)

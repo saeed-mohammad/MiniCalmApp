@@ -38,6 +38,11 @@ class PlayerViewController: UIViewController {
       configureProgress()
       loadArtwork()
       bindViewModel()
+      
+      Task {
+         await viewModel.loadDuration()
+      }
+      
    }
    
    // UI Initial Setup
