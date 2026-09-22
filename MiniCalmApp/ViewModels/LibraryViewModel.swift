@@ -29,7 +29,8 @@ class LibraryViewModel {
         onStateChange?(state)
        
         let result = await service.fetchSessions()
-        
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+       
         switch result {
         case .success(let sessions):
             self.sessions = sessions
