@@ -2,6 +2,8 @@
 
 MiniCalm is a small meditation app built as part of the iOS Developer assignment.
 
+---
+
 ## How to Run
 
 1. Clone the repository.
@@ -9,6 +11,8 @@ MiniCalm is a small meditation app built as part of the iOS Developer assignment
 3. Use the configured Bundle Identifier and Signing Team.
 4. Select an iOS 16+ simulator or device.
 5. Build and run.
+
+---
 
 ## Architecture
 
@@ -20,9 +24,24 @@ The app follows a simple MVVM architecture.
 * **Audio:** `AVPlayer` and `AVAudioSession`
 * **SwiftUI/UIKit:** `UIViewControllerRepresentable`
 
+---
+
+## 📸 Screenshots
+<p align="center">
+  <img src="MiniCalmApp/screenshots/SK_IMG.PNG" width="300">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="MiniCalmApp/screenshots/LT_IMG.PNG" width="300">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="MiniCalmApp/screenshots/PL_IMG.PNG" width="300">
+</p>
+
+---
+
 ## With More Time
 
 I would improve image caching, and further improve error handling and UI polish.
+
+---
 
 ## AI Assistance
 
